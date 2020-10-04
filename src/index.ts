@@ -7,7 +7,10 @@ import { LifeCalendar } from './job/calendar'
   const bot = new MatrixBot(matrixConfig)
   await bot.start()
 
+  console.log('bot started')
+  
   await (new MiscJob(matrixSelf)).register(bot)
   await (new LifeCalendar(matrixSelf)).register(bot)
-
+  
+  console.log('jobs registered')
 })()
