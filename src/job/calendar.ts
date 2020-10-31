@@ -112,10 +112,14 @@ export class LifeCalendar extends Job {
     let date_str = date.getMonth() + 1 +
       '/' + date.getDate() +
       '/' + date.getFullYear()
+    let promiseToWait: null | Promise<void> = null
+    if (this.calenderPromises.length > 0) {
+      promiseToWait = this.calenderPromises[this.calenderPromises.length - 1]
+    }
     this.calenderPromises.push(new Promise(async (res, rej) => {
-      if (this.calenderPromises.length > 0) {
+      if (promiseToWait) {
         await this.sayToMe('上次的日历还没有记录，正在等待之前的完成。')
-        await this.calenderPromises[this.calenderPromises.length - 1]
+        await promiseToWait
       }
       await this.getLifeCalendar(date_str)
       res()
