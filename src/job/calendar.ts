@@ -122,7 +122,7 @@ export class LifeCalendar extends Job {
         await promiseToWait
       }
       await this.getLifeCalendar(date_str)
-      res()
+      res(null)
       this.calenderPromises.splice(0, 1)
     }))
   }

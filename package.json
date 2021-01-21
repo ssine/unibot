@@ -13,6 +13,7 @@
     "@types/ali-oss": "^6.0.5",
     "@types/cron": "^1.7.2",
     "ali-oss": "^6.10.0",
+    "cq-websocket": "^2.1.1",
     "cron": "^1.8.2",
     "matrix-bot-sdk": "^0.5.7",
     "moment": "^2.27.0",
