@@ -17,10 +17,12 @@ export type Contact = {
 
 export type Room = {
   id: string
+  name: string
 }
 
 export enum MessageType {
-  text = 'text'
+  text = 'text',
+  image = 'image'
 }
 
 export type Message = {
@@ -31,6 +33,7 @@ export type Message = {
   content: {
     type: MessageType
     text: string
+    url: string
   },
   timeSent: Date
 }

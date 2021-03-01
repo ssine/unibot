@@ -1,68 +1,97 @@
-import {
-  MatrixClient,
-  SimpleFsStorageProvider,
-  AutojoinRoomsMixin,
-  LogService,
-  LogLevel,
-  MessageEvent,
-} from "matrix-bot-sdk"
+import * as sdk from "matrix-js-sdk"
+import { isThisTypeNode } from "typescript"
 import { Chatbot, EventType, Message, MessageType } from './base'
 
 type MatrixBotConfig = {
   homeserverUrl: string,
   accessToken: string,
-  dataStorePath: string
+  userId: string,
 }
 
 export class MatrixBot extends Chatbot {
-  client: MatrixClient
+  client: any
   botId: string
+  synced: boolean = false
 
   constructor(config: MatrixBotConfig) {
     super()
 
-    LogService.setLevel(LogLevel.ERROR)
-    const storage = new SimpleFsStorageProvider(config.dataStorePath)
-    this.client = new MatrixClient(config.homeserverUrl, config.accessToken, storage)
-    AutojoinRoomsMixin.setupOnClient(this.client)
+    this.client = sdk.createClient({
+      baseUrl: config.homeserverUrl,
+      accessToken: config.accessToken,
+      userId: config.userId,
+    })
 
-    this.client.on('room.message', (roomId: string, ev: any) => {
-      const event = new MessageEvent(ev)
-      if (event.isRedacted) return;  // Ignore redacted events that come through
-      if (event.sender === this.botId) return;  // Ignore ourselves
-      if (event.messageType !== "m.text") return;  // Ignore non-text messages
+    this.botId = config.userId
 
-      // message transformation
-      const from = {
-        contact: { id: event.sender },
-        room: { id: roomId }
+    this.client.on("RoomMember.membership", (event: any, member: any) => {
+      if (member.membership === "invite" && member.userId === this.botId) {
+        this.client.joinRoom(member.roomId).then(function () {
+          console.log("Auto-joined %s", member.roomId)
+        })
       }
-      const timeSent = new Date(event.timestamp)
+    })
+
+    this.client.on("Room.timeline", (event: any, room: any, toStartOfTimeline: any) => {
+      if (event.getType() !== "m.room.message") return
+      if (event.event.sender === this.botId) return
+
+      const from = {
+        contact: { id: event.event.sender },
+        room: { id: event.event.room_id, name: this.getRoomNameFromId(event.event.room_id) }
+      }
+      const timeSent = new Date(event.event.origin_server_ts)
       let content = {
         type: MessageType.text,
-        text: ''
+        text: '',
+        url: '',
       }
-      switch (event.content?.msgtype) {
+      switch (event.event.content?.msgtype) {
         case 'm.text': {
           content.type = MessageType.text
-          content.text = event.content?.body
+          content.text = event.event.content?.body
+          break
+        }
+        case 'm.image': {
+          content.type = MessageType.image
+          content.url = this.client.mxcUrlToHttp(event.event.content?.url, event.event.content?.info?.w, event.event.content?.info?.h, 'scale')
+          break
         }
       }
+      if (!this.synced) return
       this.onMessageReceived({
         from: from,
         content: content,
         timeSent: timeSent
       })
-    })
+    });
   }
 
   async start() {
-    await this.client.start()
-    this.botId = await this.client.getUserId()
+    const syncedPromise = new Promise((res, rej) => {
+      this.client.on('sync', async (state: any, prevState: any, r: any) => {
+        if (state !== 'PREPARED') return
+        this.synced = true
+        res(null)
+      })
+    })
+    await this.client.startClient({
+      initialSyncLimit: 10,
+    })
+    return syncedPromise
   }
 
-  getInternalClient(): MatrixClient {
+  getInternalClient(): any {
     return this.client
+  }
+
+  getRoomNameFromId(roomId: string): string {
+    for (const room of this.client.getRooms()) {
+      if (room.roomId === roomId) {
+        return room.name
+      }
+    }
+    return ''
   }
 
   async sendTextMessage(args: {
@@ -70,10 +99,15 @@ export class MatrixBot extends Chatbot {
   }): Promise<void> {
     if (!args.roomId)
       throw new Error('matrix message sending requires room id')
-    await this.client.sendMessage(args.roomId, {
-      'body': args.text,
-      'msgtype': 'm.text'
-    })
+    await this.client.sendEvent(
+      args.roomId,
+      'm.room.message',
+      {
+        msgtype: 'm.text',
+        body: args.text,
+      },
+      ''
+    );
   }
 
 }
