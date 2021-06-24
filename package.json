@@ -16,10 +16,13 @@
     "axios": "^0.21.1",
     "cq-websocket": "^2.1.1",
     "cron": "^1.8.2",
+    "crypto-js": "^4.0.0",
     "matrix-js-sdk": "^9.7.0",
     "moment": "^2.27.0",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/crypto-js": "^4.0.1"
+  }
 }

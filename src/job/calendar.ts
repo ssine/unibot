@@ -2,6 +2,8 @@ import { get_file_content, put_file } from '../api/oss'
 import { Chatbot, Contact, Message, EventType, MessageReceiver } from '../bot/base'
 import { CronJob } from 'cron'
 import { Job } from './base'
+import { AES } from 'crypto-js'
+import { calendar_secret } from '../config'
 
 export class LifeCalendar extends Job {
   calendarItems: string[]
@@ -81,6 +83,9 @@ export class LifeCalendar extends Job {
     while (true) {
       let content = (await this.bot.waitForMessage(this.me)).content.text
       if (content === '.' || content.trim() === '' || content === '。') break
+      if (content.startsWith('*')) {
+        content = '*' + AES.encrypt(content.substr(1), calendar_secret).toString()
+      }
       this.calendarItems.push(content)
     }
 
@@ -133,6 +138,9 @@ export class LifeCalendar extends Job {
   }
 
   addCalendarItem(event: string) {
+    if (event.startsWith('*')) {
+      event = '*' + AES.encrypt(event.substr(1), calendar_secret).toString()
+    }
     this.calendarItems.push(event)
     return
   }
