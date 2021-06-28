@@ -110,4 +110,12 @@ export class MatrixBot extends Chatbot {
     );
   }
 
+  async sendHtmlMessage(args: {
+    contactId?: string, roomId?: string, text: string, html: string
+  }): Promise<void> {
+    if (!args.roomId)
+      throw new Error('matrix message sending requires room id')
+    await this.client.sendHtmlMessage( args.roomId, args.text, args.html);
+  }
+
 }

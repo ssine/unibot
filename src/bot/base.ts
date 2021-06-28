@@ -51,8 +51,12 @@ export abstract class Chatbot {
   }
 
   abstract getInternalClient(): any
-  abstract async sendTextMessage(args: {
+  abstract sendTextMessage(args: {
     contactId?: string, roomId?: string, text: string
+  }): Promise<void>
+
+  abstract sendHtmlMessage(args: {
+    contactId?: string, roomId?: string, text: string, html: string
   }): Promise<void>
 
   /**
