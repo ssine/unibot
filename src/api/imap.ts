@@ -1,4 +1,6 @@
 // @ts-ignore
+import Imap from 'node-imap'
+// @ts-ignore
 import { simpleParser } from 'mailparser'
 
 type Email = {
@@ -15,7 +17,8 @@ type Email = {
   text: string
 }
 
-export const getRecentMails = async (imap: any, num: number): Promise<Email[]> => {
+export const getRecentMails = async (cfg: any, num: number): Promise<Email[]> => {
+  const imap = new Imap(cfg);
   return new Promise((res, rej) => {
     const mails: Email[] = []
     imap.once('ready', () => {
@@ -57,7 +60,8 @@ export const getRecentMails = async (imap: any, num: number): Promise<Email[]> =
   })
 }
 
-export const markAsRead = async (imap: any, no: number): Promise<void> => {
+export const markAsRead = async (cfg: any, no: number): Promise<void> => {
+  const imap = new Imap(cfg);
   return new Promise((res, rej) => {
     imap.once('ready', () => {
       imap.openBox('INBOX', false, (err: any, box: any) => {

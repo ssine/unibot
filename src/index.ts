@@ -12,7 +12,9 @@ import { Email } from './job/email'
 
   console.log('bot started')
   
-  await Promise.all(mails.map(config => (new Email(matrixSelf, config).register(bot))))
+  for (let config of mails) {
+    await (new Email(matrixSelf, config).register(bot))
+  }
   await (new MiscJob(matrixSelf)).register(bot)
   await (new LifeCalendar(matrixSelf)).register(bot)
   await (new Accounting(matrixSelf)).register(bot)
