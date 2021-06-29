@@ -85,14 +85,10 @@ export const markAsRead = async (cfg: any, no: number): Promise<void> => {
           rej(err)
           return
         }
-        console.log('fetch', `${no}:${no}`)
         const f = imap.seq.fetch(`${no}:${no}`, { bodies: [''], markSeen: true });
         f.on('message', (msg: any) => {
-          console.log('message')
           msg.once('attributes', (attrs: any) => {
-            console.log('attr')
             imap.addFlags(attrs.uid, ['\\Seen'], (err?: Error) => {
-                console.log('add')
                 if (err) {
                   rej()
                 } else {

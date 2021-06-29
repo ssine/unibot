@@ -25,8 +25,10 @@ export class Email extends Job {
     this.bot = bot;
 
     this.ids = (await getRecentMails(this.imapConfig, 30)).map(mail => mail.id)
+    console.log(`${this.ids.length} mails buffer created for account ${this.imapConfig.user}`)
     
     const runCheck = async () => {
+      console.log(`checking for new mails in account ${this.imapConfig.user}`)
       const mails = await getRecentMails(this.imapConfig, 4);
       await Promise.all(mails.filter(m => !this.ids.includes(m.id)).map(async m => {
         const text = `Mail #${m.id} of ${m.to.value[0]?.address}\n主题 ${m.subject}\n来自 ${m.from.text}\n正文：${m.text.substr(0, 100)}`
@@ -34,10 +36,11 @@ export class Email extends Job {
         await bot.sendHtmlMessage({ ...this.me, text: text, html: html })
         this.ids.push(m.id)
       }))
+      console.log('check done')
       setTimeout(runCheck, 15 * 60 * 1000);
     }
 
-    setTimeout(runCheck, 15 * 60 * 1000);
+    setTimeout(runCheck, 2 * 60 * 1000);  // for easy checking
 
     bot.on(EventType.message, async (msg) => {
       if (msg.from.room.id === this.me.roomId && msg.content.type === MessageType.text) {
