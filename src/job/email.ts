@@ -1,4 +1,4 @@
-import { getRecentMails, markAsRead } from '../api/imap'
+import { getMail, getRecentMails, markAsRead } from '../api/imap'
 import { Chatbot, EventType, MessageReceiver, MessageType } from "../bot/base"
 import { Job } from "./base"
 
@@ -50,6 +50,15 @@ export class Email extends Job {
           if (parseInt(m[1]) === this.accountId) {
             await markAsRead(this.imapConfig, parseInt(m[2]))
             bot.reply(msg, `Mail #${m[2]} in account ${m[1]} marked as read.`)
+            return
+          }
+        }
+
+        m = /o (\d+) (\d+)/.exec(text)
+        if (m) {
+          if (parseInt(m[1]) === this.accountId) {
+            const mail = await getMail(this.imapConfig, parseInt(m[2]))
+            bot.reply(msg, mail.text)
             return
           }
         }

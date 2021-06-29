@@ -57,7 +57,7 @@ export const getRecentMails = async (cfg: any, num: number): Promise<Email[]> =>
                 from: mail.from,
                 to: mail.to,
                 subject: mail.subject,
-                text: mail.text?.substr(0, 100) || ''
+                text: mail.text || ''
               })
               pendingMails --
               if (streamEnd && pendingMails === 0) {
@@ -75,6 +75,41 @@ export const getRecentMails = async (cfg: any, num: number): Promise<Email[]> =>
     })
   })
   return mails
+}
+
+export const getMail = async (cfg: any, no: number): Promise<Email> => {
+  return runImapFn(cfg, async (imap: any) => {
+    return new Promise((res, rej) => {
+      imap.openBox('INBOX', true, (err: any, box: any) => {
+        if (err) {
+          rej(err)
+          return
+        }
+        const f = imap.seq.fetch(`${no}:${no}`, { bodies: [''] })
+        f.on('message', (msg: any, seqno: number) => {
+          msg.on('body', (stream: any) => {
+            simpleParser(stream, (err: any, mail: any) => {
+              if (err) {
+                rej(err)
+                return
+              }
+              res({
+                id: seqno,
+                from: mail.from,
+                to: mail.to,
+                subject: mail.subject,
+                text: mail.text || ''
+              })
+            })
+          })
+        })
+        f.once('error', (err?: Error) => { err && rej(err) })
+        f.once('end', () => {
+          imap.end()
+        })
+      })
+    })
+  })
 }
 
 export const markAsRead = async (cfg: any, no: number): Promise<void> => {
