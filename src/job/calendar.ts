@@ -1,9 +1,9 @@
-import { get_file_content, put_file } from '../api/oss'
+import { getFileContent, putFile } from '../api/oss'
 import { Chatbot, Contact, Message, EventType, MessageReceiver } from '../bot/base'
 import { CronJob } from 'cron'
 import { Job } from './base'
 import { AES } from 'crypto-js'
-import { calendar_secret } from '../config'
+import { calendarSecret } from '../config'
 
 export class LifeCalendar extends Job {
   calendarItems: string[]
@@ -84,7 +84,7 @@ export class LifeCalendar extends Job {
       let content = (await this.bot.waitForMessage(this.me)).content.text
       if (content === '.' || content.trim() === '' || content === '。') break
       if (content.startsWith('*')) {
-        content = '*' + AES.encrypt(content.substr(1), calendar_secret).toString()
+        content = '*' + AES.encrypt(content.substr(1), calendarSecret).toString()
       }
       this.calendarItems.push(content)
     }
@@ -96,7 +96,7 @@ export class LifeCalendar extends Job {
     console.log('slot to append: ' + slot)
 
     console.log('getting file from oss')
-    let event_file = await get_file_content(file_name)
+    let event_file = await getFileContent(file_name)
     let events = event_file.split('\n')
     events = events.map(s => s.trim())
 
@@ -104,7 +104,7 @@ export class LifeCalendar extends Job {
 
     event_file = events.join('\n')
     console.log('saving file to oss')
-    await put_file(file_name, event_file)
+    await putFile(file_name, event_file)
 
     await this.sayToMe(`事件\n${this.calendarItems.join('\n')}\n保存成功`)
 
@@ -139,7 +139,7 @@ export class LifeCalendar extends Job {
 
   addCalendarItem(event: string) {
     if (event.startsWith('*')) {
-      event = '*' + AES.encrypt(event.substr(1), calendar_secret).toString()
+      event = '*' + AES.encrypt(event.substr(1), calendarSecret).toString()
     }
     this.calendarItems.push(event)
     return

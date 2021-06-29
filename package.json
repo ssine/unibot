@@ -18,7 +18,7 @@
     "cron": "^1.8.2",
     "crypto-js": "^4.0.0",
     "mailparser": "^3.2.0",
-    "matrix-js-sdk": "^9.7.0",
+    "matrix-js-sdk": "^12.0.0",
     "moment": "^2.27.0",
     "node-imap": "^0.9.6",
     "ts-node": "^8.10.2",

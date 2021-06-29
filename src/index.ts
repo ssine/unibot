@@ -1,5 +1,5 @@
 import { MatrixBot } from './bot/matrix'
-import { mails, matrixConfig, matrixSelf } from './config'
+import { mailConfig, matrixConfig, matrixSelf } from './config'
 import { MiscJob } from './job/misc'
 import { LifeCalendar } from './job/calendar'
 import { Accounting } from './job/accounting'
@@ -12,9 +12,7 @@ import { Email } from './job/email'
 
   console.log('bot started')
   
-  for (let config of mails) {
-    await (new Email(matrixSelf, config).register(bot))
-  }
+  await Promise.all(mailConfig.accounts.map(m => (new Email(mailConfig.room, m).register(bot))))
   await (new MiscJob(matrixSelf)).register(bot)
   await (new LifeCalendar(matrixSelf)).register(bot)
   await (new Accounting(matrixSelf)).register(bot)

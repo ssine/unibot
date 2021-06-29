@@ -1,7 +1,7 @@
 import { Chatbot, EventType, Message, MessageReceiver, MessageType } from '../bot/base'
 import { Job } from './base'
 import axios from 'axios'
-import { kiwi_config } from '../config'
+import { kiwiConfig } from '../config'
 
 export class KiwiInbox extends Job {
   me: MessageReceiver
@@ -31,9 +31,9 @@ export class KiwiInbox extends Job {
 
   async getKiwiItem(uri: string): Promise<any> {
     try {
-      const res = await axios.post(`${kiwi_config.base_uri}/get-item`, { "uri": uri }, {
+      const res = await axios.post(`${kiwiConfig.base_uri}/get-item`, { "uri": uri }, {
         headers: {
-          Cookie: `token=${kiwi_config.token}`
+          Cookie: `token=${kiwiConfig.token}`
         }
       })
       return res.data
@@ -51,9 +51,9 @@ export class KiwiInbox extends Job {
   }
 
   async setKiwiItem(originUri: string, item: any): Promise<any> {
-    const res = await axios.post(`${kiwi_config.base_uri}/save-item`, { "uri": originUri, 'item': item }, {
+    const res = await axios.post(`${kiwiConfig.base_uri}/put-item`, { "uri": originUri, 'item': item }, {
       headers: {
-        Cookie: `token=${kiwi_config.token}`
+        Cookie: `token=${kiwiConfig.token}`
       }
     })
     return res.data
@@ -62,7 +62,6 @@ export class KiwiInbox extends Job {
   async appendItemContent(uri: string, text: string): Promise<any> {
     let item = await this.getKiwiItem(uri);
     item.content += text
-    item.isContentParsed = false
     await this.setKiwiItem(item.uri, item)
   }
 }

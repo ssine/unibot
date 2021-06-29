@@ -1,7 +1,7 @@
 import { CQWebSocket } from 'cq-websocket'
 import { EventEmitter } from 'events'
 import { getLogger } from 'log4js'
-import { cq_config } from './config'
+import { cqConfig } from './config'
 
 let logger = getLogger('BOT');
 
@@ -11,9 +11,9 @@ class Bot {
 
   constructor() {
     this.bot = new CQWebSocket({
-      host: cq_config.host,
-      port: cq_config.port,
-      accessToken: cq_config.accessToken,
+      host: cqConfig.host,
+      port: cqConfig.port,
+      accessToken: cqConfig.accessToken,
     });
     this.emitter = new EventEmitter();
 

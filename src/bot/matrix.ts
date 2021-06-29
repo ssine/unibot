@@ -1,6 +1,9 @@
 import * as sdk from "matrix-js-sdk"
+import { logger } from "matrix-js-sdk/lib/logger"
 import { isThisTypeNode } from "typescript"
 import { Chatbot, EventType, Message, MessageType } from './base'
+
+logger.disableAll();
 
 type MatrixBotConfig = {
   homeserverUrl: string,

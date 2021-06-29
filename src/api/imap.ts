@@ -2,6 +2,7 @@
 import Imap from 'node-imap'
 // @ts-ignore
 import { simpleParser } from 'mailparser'
+import { serialize } from '../utils'
 
 type Email = {
   id: number
@@ -17,87 +18,96 @@ type Email = {
   text: string
 }
 
-export const getRecentMails = async (cfg: any, num: number): Promise<Email[]> => {
-  const imap = new Imap(cfg);
+const runImapFn = serialize(async (imapCfg: any, fn: (...args: any[]) => Promise<any>) => {
+  const imap = new Imap(imapCfg)
   return new Promise((res, rej) => {
-    const mails: Email[] = []
     imap.once('ready', () => {
+      fn(imap).then(res)
+    })
+    imap.once('error', function(err: any) {
+      rej(err)
+    })
+    imap.connect()
+  })
+})
+
+export const getRecentMails = async (cfg: any, num: number): Promise<Email[]> => {
+  const mails: Email[] = []
+  await runImapFn(cfg, async (imap: any) => {
+    return new Promise((res, rej) => {
       imap.openBox('INBOX', true, (err: any, box: any) => {
         if (err) {
-          rej(err);
-          return;
+          rej(err)
+          return
         }
-        console.log(box.messages)
         const first = box.messages.total - num + 1
-        const f = imap.seq.fetch(`${first < 1 ? 1 : first}:*`, { bodies: [''] });
+        let pendingMails = 0
+        let streamEnd = false
+        const f = imap.seq.fetch(`${first < 1 ? 1 : first}:*`, { bodies: [''] })
         f.on('message', (msg: any, seqno: number) => {
+          pendingMails ++
           msg.on('body', (stream: any) => {
             simpleParser(stream, (err: any, mail: any) => {
               if (err) {
-                rej(err);
-                return;
+                rej(err)
+                return
               }
-              mail.id = seqno
-              mails.push(mail)
-            });
-          });
-        });
-        f.once('error', function(err: any) {
-          rej(err)
-        });
-        f.once('end', function() {
-          console.log('Done fetching all messages!');
-          imap.end();
-          res(mails);
-        });
+              mails.push({
+                id: seqno,
+                from: mail.from,
+                to: mail.to,
+                subject: mail.subject,
+                text: mail.text?.substr(0, 100) || ''
+              })
+              pendingMails --
+              if (streamEnd && pendingMails === 0) {
+                res(mails)
+              }
+            })
+          })
+        })
+        f.once('error', (err?: Error) => { err && rej(err) })
+        f.once('end', () => {
+          imap.end()
+          streamEnd = true
+        })
       })
-    });
-    imap.once('error', function(err: any) {
-      rej(err);
-    });
-     
-    imap.connect();
+    })
   })
+  return mails
 }
 
 export const markAsRead = async (cfg: any, no: number): Promise<void> => {
-  const imap = new Imap(cfg);
-  return new Promise((res, rej) => {
-    imap.once('ready', () => {
+  await runImapFn(cfg, async (imap: any) => {
+    return new Promise((res, rej) => {
       imap.openBox('INBOX', false, (err: any, box: any) => {
         if (err) {
-          rej(err);
-          return;
+          rej(err)
+          return
         }
+        console.log('fetch', `${no}:${no}`)
         const f = imap.seq.fetch(`${no}:${no}`, { bodies: [''], markSeen: true });
         f.on('message', (msg: any) => {
-          msg.on('body', (stream: any) => {
-            stream.once('end', () => {
-              msg.once('attributes', (attrs: any) => {
-                imap.addFlags(attrs.uid, ['\\Seen'], (err?: Error) => {
-                    if (err) {
-                      rej();
-                    }
-                });
-              })
+          console.log('message')
+          msg.once('attributes', (attrs: any) => {
+            console.log('attr')
+            imap.addFlags(attrs.uid, ['\\Seen'], (err?: Error) => {
+                console.log('add')
+                if (err) {
+                  rej()
+                } else {
+                  res(null)
+                }
             })
-          });
-        });
+          })
+        })
         f.once('error', function(err: any) {
           rej(err)
-        });
+        })
         f.once('end', function() {
-          imap.end();
-        });
+          imap.end()
+        })
       })
-    });
-    imap.once('error', function(err: any) {
-      rej(err);
-    });
-     
-    imap.once('end', function() {
-      res();
-    });
-    imap.connect();
+    })
   })
 }
