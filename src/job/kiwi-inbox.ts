@@ -51,7 +51,7 @@ export class KiwiInbox extends Job {
   }
 
   async setKiwiItem(originUri: string, item: any): Promise<any> {
-    const res = await axios.post(`${kiwiConfig.base_uri}/put-item`, { "uri": originUri, 'item': item }, {
+    const res = await axios.post(`${kiwiConfig.base_uri}/put-item`, { 'uri': originUri, 'item': item }, {
       headers: {
         Cookie: `token=${kiwiConfig.token}`
       }
@@ -60,8 +60,8 @@ export class KiwiInbox extends Job {
   }
 
   async appendItemContent(uri: string, text: string): Promise<any> {
-    let item = await this.getKiwiItem(uri);
+    let item = (await this.getKiwiItem(uri)).data;
     item.content += text
-    await this.setKiwiItem(item.uri, item)
+    await this.setKiwiItem(uri, item)
   }
 }
