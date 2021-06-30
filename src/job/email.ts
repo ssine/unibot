@@ -29,7 +29,7 @@ export class Email extends Job {
     
     const runCheck = async () => {
       console.log(`[${new Date().toLocaleString()}] checking for new mails in account ${this.imapConfig.user}`)
-      const mails = await getRecentMails(this.imapConfig, 4);
+      const mails = await getRecentMails(this.imapConfig, 30);
       console.log(`[${new Date().toLocaleString()}] mails in ${this.imapConfig.user}: ${mails.map(m => m.id)}`)
       await Promise.all(mails.filter(m => !this.ids.includes(m.id)).map(async m => {
         const text = `Mail #${m.id} of ${m.to.value[0]?.address}\n主题 ${m.subject}\n来自 ${m.from.text}\n正文：${m.text.substr(0, 100)}`
