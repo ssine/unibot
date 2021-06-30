@@ -26,7 +26,7 @@ export class Email extends Job {
 
     this.ids = (await getRecentMails(this.imapConfig, 30)).map(mail => mail.id)
     console.log(`${this.ids.length} mails buffer created for account ${this.imapConfig.user}`)
-    
+
     const runCheck = async () => {
       console.log(`checking for new mails in account ${this.imapConfig.user}`)
       const mails = await getRecentMails(this.imapConfig, 4);
@@ -59,6 +59,20 @@ export class Email extends Job {
           if (parseInt(m[1]) === this.accountId) {
             const mail = await getMail(this.imapConfig, parseInt(m[2]))
             bot.reply(msg, mail.text)
+            return
+          }
+        }
+
+        m = /ls (\d+) (\d+)/.exec(text)
+        if (m) {
+          if (parseInt(m[1]) === this.accountId) {
+            const mails = await getRecentMails(this.imapConfig, parseInt(m[2]))
+            mails.sort((a, b) => a.id - b.id)
+            for (let mail of mails) {
+              const text = `Mail #${mail.id} of ${this.imapConfig.user}\n主题 ${mail.subject}\n来自 ${mail.from.text}\n正文：${mail.text.substr(0, 100)}`
+              const html = `<h1>Mail #${mail.id} of ${this.imapConfig.user} (${this.accountId})</h1><b>主题</b> ${mail.subject}<br/><b>来自</b> <i>${mail.from.text}</i><br/><b>正文</b> ${mail.text.substr(0, 100)}`
+              await bot.sendHtmlMessage({ ...this.me, text: text, html: html })
+            }
             return
           }
         }
