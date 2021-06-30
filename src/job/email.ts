@@ -25,12 +25,12 @@ export class Email extends Job {
     this.bot = bot;
 
     this.ids = (await getRecentMails(this.imapConfig, 30)).map(mail => mail.id)
-    console.log(`[${new Date().toLocaleString()}] ${this.ids.length} mails buffer created for account ${this.imapConfig.user}: ${this.ids}`)
+    console.log(`[${new Date().toLocaleString()}] ${this.ids.length} mails buffer created for account ${this.imapConfig.user}: ${this.ids.sort((a, b) => a - b)}`)
     
     const runCheck = async () => {
       console.log(`[${new Date().toLocaleString()}] checking for new mails in account ${this.imapConfig.user}`)
       const mails = await getRecentMails(this.imapConfig, 30);
-      console.log(`[${new Date().toLocaleString()}] mails in ${this.imapConfig.user}: ${mails.map(m => m.id)}`)
+      console.log(`[${new Date().toLocaleString()}] mails in ${this.imapConfig.user}: ${mails.map(m => m.id).sort((a, b) => a - b)}`)
       await Promise.all(mails.filter(m => !this.ids.includes(m.id)).map(async m => {
         const text = `Mail #${m.id} of ${m.to.value[0]?.address}\n主题 ${m.subject}\n来自 ${m.from.text}\n正文：${m.text.substr(0, 100)}`
         const html = `<h1>Mail #${m.id} of ${this.imapConfig.user} (${this.accountId})</h1><b>主题</b> ${m.subject}<br/><b>来自</b> <i>${m.from.text}</i><br/><b>正文</b> ${m.text.substr(0, 100)}`
