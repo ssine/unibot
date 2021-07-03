@@ -28,6 +28,8 @@ export class Email extends Job {
     console.log(`[${new Date().toLocaleString()}] ${this.ids.length} mails buffer created for account ${this.imapConfig.user}: ${this.ids.sort((a, b) => a - b)}`)
     
     const runCheck = async () => {
+      setTimeout(runCheck, 15 * 60 * 1000);
+
       console.log(`[${new Date().toLocaleString()}] checking for new mails in account ${this.imapConfig.user}`)
       const mails = await getRecentMails(this.imapConfig, 30);
       console.log(`[${new Date().toLocaleString()}] mails in ${this.imapConfig.user}: ${mails.map(m => m.id).sort((a, b) => a - b)}`)
@@ -39,7 +41,6 @@ export class Email extends Job {
         console.log(`mail ${m.id} add into read set in account ${this.imapConfig.user}.`)
       }))
       console.log(`[${new Date().toLocaleString()}] account ${this.imapConfig.user} check done`)
-      setTimeout(runCheck, 15 * 60 * 1000);
     }
 
     setTimeout(runCheck, 2 * 60 * 1000);  // for easy checking
