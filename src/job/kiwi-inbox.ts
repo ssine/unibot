@@ -2,6 +2,7 @@ import { Chatbot, EventType, Message, MessageReceiver, MessageType } from '../bo
 import { Job } from './base'
 import axios from 'axios'
 import { kiwiConfig } from '../config'
+import { putImage } from '../api/kiwi'
 
 export class KiwiInbox extends Job {
   me: MessageReceiver
@@ -19,7 +20,9 @@ export class KiwiInbox extends Job {
           this.appendItemContent(msg.from.room.name, '\n\n' + msg.content.text)
           await bot.reply(msg, `text added to ${msg.from.room.name}`)
         } else if (msg.content.type === MessageType.image) {
-          this.appendItemContent(msg.from.room.name, `\n\n![img](${msg.content.url})`)
+          const m = /.*\/(.+?)\?/.exec(msg.content.url)
+          const uri = await putImage(msg.content.url, m[1])
+          this.appendItemContent(msg.from.room.name, `\n\n![img](${uri})`)
           await bot.reply(msg, `image added to ${msg.from.room.name}`)
         }
       } else if (msg.content.text.startsWith('get')) {
